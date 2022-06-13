@@ -112,6 +112,6 @@ define Package/$(PKG_NAME)/conffiles
 /etc/ssrplus/
 endef
 
-include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature
