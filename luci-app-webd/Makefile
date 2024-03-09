@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)/config
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_WEBD_BINARY
 	bool "Include webd Binary"
-	default y
+	default n
 
 endef
 
