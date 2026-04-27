@@ -1,5 +1,5 @@
 config global 'global'
-        option enabled '1'
+        option enabled '0'
         option ipv6_enabled '1'
         option advanced '1'
         option custome_url 'https://speedtest.poorhub.pro/cf.7z'
