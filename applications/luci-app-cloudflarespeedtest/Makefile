@@ -15,7 +15,21 @@ PKG_RELEASE:=0
 PKG_LICENSE:=AGPL-3.0
 PKG_MAINTAINER:=mingxiaoyu <fengying0347@163.com>
 
-include $(TOPDIR)/feeds/luci/luci.mk
-
 # call BuildPackage - OpenWrt buildroot signature
+# 1. 声明：告诉系统哪些是需要保护的配置文件
+define Package/luci-app-cloudflarespeedtest/conffiles
+/etc/config/cloudflarespeedtest
+endef
 
+# 2. 安装：实际把文件放进安装包并设定正确的权限
+define Package/luci-app-cloudflarespeedtest/install
+	# 安装可执行的脚本
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./root/etc/init.d/cloudflarespeedtest $(1)/etc/init.d/cloudflarespeedtest
+	
+	# 安装不具备执行权限的配置文件
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./root/etc/config/cloudflarespeedtest $(1)/etc/config/cloudflarespeedtest
+endef
+
+include $(TOPDIR)/feeds/luci/luci.mk
