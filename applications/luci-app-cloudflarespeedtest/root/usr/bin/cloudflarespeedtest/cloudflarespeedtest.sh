@@ -42,7 +42,7 @@ function speed_test(){
 
     rm -rf $LOG_FILE
 
-    command="/usr/bin/cdnspeedtest -sl $((speed*125/1000)) -url ${custome_url} -o ${IP_FILE}"
+    command="/usr/bin/cdnspeedtest -sl ${speed} -url $custome_url} -o ${IP_FILE}"
 
     if [ $ipv6_enabled -eq "1" ] ;then
         command="${command} -f ${IPV6_TXT}"
@@ -51,7 +51,7 @@ function speed_test(){
     fi
 
     if [ $advanced -eq "1" ] ; then
-        command="${command} -tl ${tl} -tll ${tll} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
+        command="${command} -tl ${tl} -tll ${tll} -n ${threads} -t ${t} -dt ${dt} -dn ${dn} -tlr 0.5"
         if [ $dd -eq "1" ] ; then
             command="${command} -dd"
         fi
