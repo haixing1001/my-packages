@@ -39,9 +39,6 @@ define Package/cdnspeedtest/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/CloudflareSpeedTest $(1)/usr/bin/cdnspeedtest
 
-	$(INSTALL_DIR) $(1)/usr/share/CloudflareSpeedTest
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ip.txt $(1)/usr/share/CloudflareSpeedTest/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ipv6.txt $(1)/usr/share/CloudflareSpeedTest/
 endef
 
 $(eval $(call BuildPackage,cdnspeedtest))
