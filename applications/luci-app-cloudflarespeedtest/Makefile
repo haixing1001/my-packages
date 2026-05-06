@@ -32,8 +32,12 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_CONF) ./root/etc/config/cloudflarespeedtest $(1)/etc/config/cloudflarespeedtest
 
 	$(INSTALL_DIR) $(1)/usr/share/CloudflareSpeedTest/
-	$(INSTALL_DATA) ./usr/share/CloudflareSpeedTest/ip.txt $(1)/usr/share/CloudflareSpeedTest/
-	$(INSTALL_DATA) ./usr/share/CloudflareSpeedTest/ipv6.txt $(1)/usr/share/CloudflareSpeedTest/
+	$(INSTALL_DATA) ./root/usr/share/CloudflareSpeedTest/ip.txt $(1)/usr/share/CloudflareSpeedTest/
+	$(INSTALL_DATA) ./root/usr/share/CloudflareSpeedTest/ipv6.txt $(1)/usr/share/CloudflareSpeedTest/
+	
+	$(INSTALL_DIR) $(1)/usr/bin/cloudflarespeedtest/
+	$(INSTALL_BIN) ./root/usr/bin/cloudflarespeedtest/aliddns.sh $(1)/usr/bin/cloudflarespeedtest/
+	$(INSTALL_BIN) ./root/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh $(1)/usr/bin/cloudflarespeedtest/
 
 endef
 
