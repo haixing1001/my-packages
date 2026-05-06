@@ -26,7 +26,7 @@ echolog() {
 }
 
 function read_config(){
-    get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "ipv6_enabled" "advanced" "proxy_mode"
+    get_global_config "enabled" "speed" "custome_url" "threads" "custome_cors_enabled" "custome_cron" "t" "tp" "dt" "dn" "dd" "tl" "tll" "tlr" "ipv6_enabled" "advanced" "proxy_mode"
     get_servers_config "ssr_services" "ssr_enabled" "passwall_enabled" "passwall_services" "passwall2_enabled" "passwall2_services" "bypass_enabled" "bypass_services" "vssr_enabled" "vssr_services" "DNS_enabled" "HOST_enabled" "MosDNS_enabled" "openclash_restart"
 }
 
@@ -51,7 +51,7 @@ function speed_test(){
     fi
 
     if [ $advanced -eq "1" ] ; then
-        command="${command} -tl ${tl} -tll ${tll} -n ${threads} -t ${t} -dt ${dt} -dn ${dn} -tlr 0.5"
+        command="${command} -tl ${tl} -tll ${tll} -tlr ${tlr} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
         if [ $dd -eq "1" ] ; then
             command="${command} -dd"
         fi
@@ -158,7 +158,7 @@ function ip_replace(){
     else
         host_ip
         mosdns_ip
-        alidns_ip
+        ddns_ip
         ssr_best_ip
         vssr_best_ip
         bypass_best_ip
@@ -326,21 +326,36 @@ function restart_app(){
     fi
 }
 
-function alidns_ip(){
+function dddns_ip(){
     if [ "x${DNS_enabled}" == "x1" ] ;then
-        get_servers_config "DNS_type" "app_key" "app_secret" "main_domain" "sub_domain" "line"
-        if [ $DNS_type == "aliyu" ] ;then
-            for sub in $sub_domain
-            do
-                /usr/bin/cloudflarespeedtest/aliddns.sh $app_key $app_secret $main_domain $sub $line $ipv6_enabled $bestip
-                echolog "更新域名${sub}阿里云DNS完成"
-                sleep 1s
-            done
+        get_servers_config "DNS_type" "main_domain" "sub_domain" "cf_token" "app_key" "app_secret" "line"
+
+        if [ "$sub_domain" == "@" ]; then
+            record_name="$main_domain"
+        else
+            record_name="${sub_domain}.${main_domain}"
         fi
-        echo "aliyun done"
+
+        if [ "$DNS_type" == "cloudflaredns" ] ;then
+            /usr/bin/cloudflarespeedtest/cfddns.sh "$cf_token" "$record_name" "$ipv6_enabled" "$bestip"
+
+            if [ "$?" = "0" ]; then
+                echolog "更新域名 ${record_name} Cloudflare DNS 完成"
+            else
+                echolog "更新域名 ${record_name} Cloudflare DNS 失败"
+            fi
+
+        elif [ "$DNS_type" == "aliyun" ] ;then
+            /usr/bin/cloudflarespeedtest/aliddns.sh "$app_key" "$app_secret" "$main_domain" "$sub_domain" "$line" "$ipv6_enabled" "$bestip"
+
+            if [ "$?" = "0" ]; then
+                echolog "更新域名 ${record_name} 阿里云 DNS 完成"
+            else
+                echolog "更新域名 ${record_name} 阿里云 DNS 失败"
+            fi
+        fi
     fi
 }
-
 read_config
 
 # 启动参数
