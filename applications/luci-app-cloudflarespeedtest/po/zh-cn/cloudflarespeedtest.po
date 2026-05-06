@@ -109,6 +109,9 @@ msgstr "平均延迟上限"
 msgid "Average Latency Lower Bound"
 msgstr "平均延迟下限"
 
+msgid "Packet Loss Rate"
+msgstr "丢包几率上限"
+
 msgid "IPv6 Enabled"
 msgstr "启用IPv6"
 
@@ -181,11 +184,17 @@ msgstr "DNS类型"
 msgid "AliyuDNS"
 msgstr "阿里云DNS"
 
+msgid "CloudflareDNS"
+msgstr "CloudflareDNS"
+
 msgid "Access Key ID"
 msgstr "Access Key ID"
 
 msgid "Access Key Secret"
 msgstr "Access Key Secret"
+
+msgid "Cloudflare API Token"
+msgstr "Cloudflare API Token"
 
 msgid "Main Domain"
 msgstr "主域名"
