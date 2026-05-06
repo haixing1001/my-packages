@@ -76,6 +76,12 @@ o.default = 40
 o.rmempty=true
 o:depends("advanced", 1)
 
+o = s:option(Value, "tlr", translate("Packet Loss Rate"))
+o.datatype = "float"
+o.default = "1.00"
+o.rmempty=true
+o:depends("advanced", 1)
+
 o = s:option(Value, "t", translate("Delayed speed measurement time"))
 o.datatype ="uinteger"
 o.default = 4
