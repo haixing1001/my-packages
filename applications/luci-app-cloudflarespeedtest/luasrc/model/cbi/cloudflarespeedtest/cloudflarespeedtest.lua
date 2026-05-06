@@ -283,15 +283,10 @@ s:tab("dnstab", translate("DNS"))
 o=s:taboption("dnstab", Flag, "DNS_enabled",translate("DNS Enabled"))
 
 o=s:taboption("dnstab", ListValue, "DNS_type", translate("DNS Type"))
+o:value("cloudflare", translate("CloudflareDNS"))
 o:value("aliyu", translate("AliyuDNS"))
 o:depends("DNS_enabled", 1)
-
-o=s:taboption("dnstab", Value,"app_key",translate("Access Key ID"))
-o.rmempty=true
-o:depends("DNS_enabled", 1)
-o=s:taboption("dnstab", Value,"app_secret",translate("Access Key Secret"))
-o.rmempty=true
-o:depends("DNS_enabled", 1)
+o.default ="cloudflare"
 
 o=s:taboption("dnstab", Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
 o.rmempty=true
@@ -300,12 +295,23 @@ o=s:taboption("dnstab", DynamicList,"sub_domain",translate("Sub Domain"),transla
 o.rmempty=true
 o:depends("DNS_enabled", 1)
 
+o = s:taboption("dnstab", Value, "cf_token", translate("Cloudflare API Token")"))
+o.rmempty = true
+o:depends("DNS_type", "cloudflare")
+
+o=s:taboption("dnstab", Value,"app_key",translate("Access Key ID"))
+o.rmempty=true
+o:depends("DNS_type", "aliyun")
+o=s:taboption("dnstab", Value,"app_secret",translate("Access Key Secret"))
+o.rmempty=true
+o:depends("DNS_type", "aliyun")
+
 o=s:taboption("dnstab", ListValue, "line", translate("Lines"))
 o:value("default", translate("default"))
 o:value("telecom", translate("telecom"))
 o:value("unicom", translate("unicom"))
 o:value("mobile", translate("mobile"))
-o:depends("DNS_enabled", 1)
+o:depends("DNS_type", "aliyun")
 o.default ="telecom"
 
 s:tab("dnshost", translate("HOST"))
