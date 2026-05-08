@@ -35,9 +35,6 @@ endef
 
 define Package/frp/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/config/
-	$(INSTALL_DIR) $(1)/etc/init.d/
-
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/$(2) $(1)/usr/bin/
 
 endef
@@ -57,9 +54,6 @@ define Package/frp/template
     behind a NAT or firewall to the internet.
   endef
 
-  define Package/$(1)/conffiles
-/etc/config/$(1)
-  endef
 
   define Package/$(1)/install
     $(call Package/frp/install,$$(1),$(1))
