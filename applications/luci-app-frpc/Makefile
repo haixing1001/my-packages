@@ -26,11 +26,11 @@ exit 0
 endef
 
 # 安装后脚本，可以配置权限等但不建议
-# define Package/$(PKG_NAME)/postinst
+ define Package/$(PKG_NAME)/postinst
 # #!/bin/sh
-# chmod 0755 /etc/init.d/frpc
-# exit 0
-# endef
+ chmod 0755 /etc/init.d/frpc
+ exit 0
+ endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
 
