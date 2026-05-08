@@ -40,10 +40,6 @@ define Package/frp/install
 
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/$(2) $(1)/usr/bin/
 
-	if [ -r ./files/$(2).uci-defaults ]; then \
-		$(INSTALL_DIR) $(1)/etc/uci-defaults; \
-		$(INSTALL_DATA) ./files/$(2).uci-defaults $(1)/etc/uci-defaults/$(2); \
-	fi
 endef
 
 define Package/frp/template
