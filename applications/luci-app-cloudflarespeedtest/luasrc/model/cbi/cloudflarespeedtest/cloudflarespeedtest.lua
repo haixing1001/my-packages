@@ -290,7 +290,7 @@ o=s:taboption("dnstab", Flag, "DNS_enabled",translate("DNS Enabled"))
 
 o=s:taboption("dnstab", ListValue, "DNS_type", translate("DNS Type"))
 o:value("cloudflare", translate("CloudflareDNS"))
-o:value("aliyu", translate("AliyuDNS"))
+o:value("aliyun", translate("AliyuDNS"))
 o:depends("DNS_enabled", 1)
 o.default ="cloudflare"
 
