@@ -301,7 +301,7 @@ o=s:taboption("dnstab", DynamicList,"sub_domain",translate("Sub Domain"),transla
 o.rmempty=true
 o:depends("DNS_enabled", 1)
 
-o = s:taboption("dnstab", Value, "cf_token", translate("Cloudflare API Token")"))
+o = s:taboption("dnstab", Value, "cf_token", translate("Cloudflare API Token"))
 o.rmempty = true
 o:depends("DNS_type", "cloudflare")
 
