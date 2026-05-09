@@ -40,5 +40,12 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./root/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh $(1)/usr/bin/cloudflarespeedtest/
 
 endef
+# 安装后脚本，可以配置权限等但不建议
+define Package/$(PKG_NAME)/postinst
+ #!/bin/sh
+ chmod 0755 /usr/bin/cloudflarespeedtest/*.sh
+ exit 0
+
+endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
