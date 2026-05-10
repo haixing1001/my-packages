@@ -26,6 +26,7 @@ define Package/$(PKG_NAME)/install
 	# 安装可执行的脚本
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./root/etc/init.d/cloudflarespeedtest $(1)/etc/init.d/cloudflarespeedtest
+	chmod 755 $(1)/etc/init.d/cloudflarespeedtest
 	
 	# 安装不具备执行权限的配置文件
 	$(INSTALL_DIR) $(1)/etc/config
@@ -39,14 +40,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./root/usr/bin/cloudflarespeedtest/aliddns.sh $(1)/usr/bin/cloudflarespeedtest/
 	$(INSTALL_BIN) ./root/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh $(1)/usr/bin/cloudflarespeedtest/
 
-endef
-# 安装后脚本，可以配置权限等但不建议
-define Package/$(PKG_NAME)/postinst
- #!/bin/sh
- chmod +x /usr/bin/cloudflarespeedtest/*.sh
- chmod +x /etc/init.d/cloudflarespeedtest
- exit 0
+	chmod 755 $(1)/usr/bin/cloudflarespeedtest/*.sh
 
 endef
+
 
 include $(TOPDIR)/feeds/luci/luci.mk
