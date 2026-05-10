@@ -43,7 +43,8 @@ endef
 # 安装后脚本，可以配置权限等但不建议
 define Package/$(PKG_NAME)/postinst
  #!/bin/sh
- chmod 0755 /usr/bin/cloudflarespeedtest/*.sh
+ chmod +x /usr/bin/cloudflarespeedtest/*.sh
+ chmod +x /etc/init.d/cloudflarespeedtest
  exit 0
 
 endef
