@@ -24,7 +24,10 @@ if [ -f /etc/config/frpc ] ; then
 fi
 exit 0
 endef
-
+chmod 0755 /etc/init.d/frpc
+define Package/$(PKG_NAME)/install
+chmod 0755 /etc/init.d/frpc
+endef
 # 安装后脚本，可以配置权限等但不建议
 # define Package/$(PKG_NAME)/postinst
 # #!/bin/sh
