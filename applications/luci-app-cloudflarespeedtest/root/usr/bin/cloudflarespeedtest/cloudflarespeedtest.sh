@@ -42,7 +42,7 @@ function speed_test(){
 
     rm -rf $LOG_FILE
 
-    command="/usr/bin/cdnspeedtest -sl ${speed} -url $custome_url} -o ${IP_FILE}"
+    command="/usr/bin/cdnspeedtest -sl ${speed} -url ${custom_url} -o ${IP_FILE}"
 
     if [ $ipv6_enabled -eq "1" ] ;then
         command="${command} -f ${IPV6_TXT}"
