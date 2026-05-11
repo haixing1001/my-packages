@@ -21,10 +21,11 @@ if [ -f /etc/config/frpc ] ; then
   echo "备份旧 uci 配置文件 /etc/config/frpc 到 /etc/config/frpc.old"
   /etc/init.d/frpc stop 2>/dev/null
   mv -f /etc/config/frpc /etc/config/frpc.old
+chmod 0755 /etc/init.d/frpc
 fi
 exit 0
 endef
-chmod 0755 /etc/init.d/frpc
+
 define Package/$(PKG_NAME)/install
 chmod 0755 /etc/init.d/frpc
 endef
