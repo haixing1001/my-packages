@@ -326,7 +326,7 @@ function restart_app(){
     fi
 }
 
-function dddns_ip(){
+function ddns_ip(){
     if [ "x${DNS_enabled}" == "x1" ] ;then
         get_servers_config "DNS_type" "main_domain" "sub_domain" "cf_token" "app_key" "app_secret" "line"
 
