@@ -115,6 +115,9 @@ msgstr "启用IPv6"
 msgid "Delayed speed measurement time"
 msgstr "延迟测速次数"
 
+msgid "Packet Loss Rate"
+msgstr "丢包几率上限"
+
 msgid "Download speed test time"
 msgstr "下载测速时间"
 
