@@ -1,5 +1,5 @@
 #!/bin/sh
-LOG_FILE='/tmp/cloudflarespeedtest.log'
+LOG_FILE='/var/log/cloudflarespeedtest.log'
 
 echolog() {
 	local d="$(date "+%Y-%m-%d %H:%M:%S")"
@@ -12,37 +12,38 @@ isIpv6=$3
 ip=$4
 
 type="A"
-if [ "$isIpv6" -eq "1" ] ;then
+if [ "$isIpv6" = "1" ] ;then
 	type="AAAA"
 fi
 
 # ==========================================
-# 自动获取 Zone ID 的函数
+# 逐级递进循环获取 Zone ID (完美支持多级子域名如 test.xx.xx.com)
 # ==========================================
 get_zone_id() {
     local current_domain="$1"
-    local zone_res
-    local extracted_id
+    local zone_id=""
 
-    # 逐级截取域名进行查询，直到域名中不再包含 "." (比如截取到最后只剩 com)
-    while [ "${current_domain}" != "" ] && [ "$(echo "$current_domain" | grep -o '\.' | wc -l)" -ge 1 ]; do
-        # 请求 Cloudflare API 匹配 Zone 域名
-        zone_res=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${current_domain}" \
+    # 循环条件：当前域名不为空且包含点号 "."
+    while [ -n "$current_domain" ] && echo "$current_domain" | grep -q '\.'; do
+        # 请求 Cloudflare API 匹配当前级别的域名
+        zone_res=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${current_domain}&status=active" \
              -H "Authorization: Bearer $cf_token" \
              -H "Content-Type: application/json")
 
-        # 检查返回结果中是否成功匹配到了该域名的信息
-        if echo "$zone_res" | grep -q '"name":"'"$current_domain"'"'; then
-            # 提取 Zone ID
-            extracted_id=$(echo "$zone_res" | grep -o '"id":"[a-zA-Z0-9]*"' | head -n 1 | awk -F'"' '{print $4}')
-            echo "$extracted_id"
+        # 使用 OpenWrt 自带的 jsonfilter 解析 id
+        zone_id=$(echo "$zone_res" | jsonfilter -e '@.result[0].id')
+        
+        # 如果找到了有效的 Zone ID，直接输出并返回成功
+        if [ -n "$zone_id" ]; then
+            echo "$zone_id"
             return 0
         fi
 
-        # 截掉第一段子域名，继续查下一级 (例如把 test.example.com 变成 example.com)
+        # 如果当前级别未找到，剥离最左侧的一级子域名继续往下匹配
+        # 演进过程示例：test.xx.xx.com -> xx.xx.com -> xx.com
         current_domain=$(echo "$current_domain" | cut -d'.' -f2-)
     done
-    echo ""
+    return 1
 }
 
 # 调用函数获取 Zone ID
@@ -62,7 +63,7 @@ record_res=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$cf_zone
      -H "Authorization: Bearer $cf_token" \
      -H "Content-Type: application/json")
 
-record_id=$(echo "$record_res" | grep -o '"id":"[a-zA-Z0-9]*"' | head -n 1 | awk -F'"' '{print $4}')
+record_id=$(echo "$record_res" | jsonfilter -e '@.result[0].id')
 
 if [ -z "$record_id" ]; then
 	# ==========================================
@@ -73,7 +74,8 @@ if [ -z "$record_id" ]; then
 	     -H "Content-Type: application/json" \
 	     --data '{"type":"'"$type"'","name":"'"$record_name"'","content":"'"$ip"'","ttl":60,"proxied":false}')
 	
-	if echo "$res" | grep -q '"success":true'; then
+	success=$(echo "$res" | jsonfilter -e '@.success')
+	if [ "$success" = "true" ]; then
 		echolog "成功添加 Cloudflare DNS 记录: $record_name ($ip)"
 	else
 		echolog "# 错误：添加 Cloudflare DNS 记录失败。请检查 API Token"
@@ -87,7 +89,8 @@ else
 	     -H "Content-Type: application/json" \
 	     --data '{"type":"'"$type"'","name":"'"$record_name"'","content":"'"$ip"'","ttl":60,"proxied":false}')
 	
-	if echo "$res" | grep -q '"success":true'; then
+	success=$(echo "$res" | jsonfilter -e '@.success')
+	if [ "$success" = "true" ]; then
 		echolog "成功更新 Cloudflare DNS 记录: $record_name ($ip)"
 	else
 		echolog "# 错误：更新 Cloudflare DNS 记录失败。请检查 API Token"
