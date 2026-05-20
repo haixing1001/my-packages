@@ -336,7 +336,7 @@ function ddns_ip(){
             record_name="${sub_domain}.${main_domain}"
         fi
 
-        if [ "$DNS_type" == "cloudflaredns" ] ;then
+        if [ "$DNS_type" == "cloudflare" ] ;then
             /usr/bin/cloudflarespeedtest/cfddns.sh "$cf_token" "$record_name" "$ipv6_enabled" "$bestip"
 
             if [ "$?" = "0" ]; then
