@@ -284,6 +284,19 @@ if nixio.fs.access("/etc/config/vssr") then
 
 end
 
+local function preserve_dns_arg(option_obj)
+	local orig_remove = option_obj.remove
+	option_obj.remove = function(self, section)
+		if uci:get("cloudflarespeedtest", section, "DNS_enabled") == "1" then
+			if orig_remove then
+				orig_remove(self, section)
+			else
+				luci.model.cbi.Value.remove(self, section)
+			end
+		end
+	end
+end
+
 s:tab("dnstab", translate("DNS"))
 
 o=s:taboption("dnstab", Flag, "DNS_enabled",translate("DNS Enabled"))
@@ -293,24 +306,32 @@ o:value("cloudflare", translate("CloudflareDNS"))
 o:value("aliyun", translate("AliyuDNS"))
 o:depends("DNS_enabled", 1)
 o.default ="cloudflare"
+preserve_dns_arg(o) -- 注入保护
 
 o=s:taboption("dnstab", Value,"main_domain",translate("Main Domain"),translate("For example: test.github.com -> github.com"))
 o.rmempty=true
 o:depends("DNS_enabled", 1)
+preserve_dns_arg(o)
+
 o=s:taboption("dnstab", Value,"sub_domain",translate("Sub Domain"),translate("For example: test.github.com -> test"))
 o.rmempty=true
 o:depends("DNS_enabled", 1)
+preserve_dns_arg(o)
 
 o = s:taboption("dnstab", Value, "cf_token", translate("Cloudflare API Token"))
 o.rmempty = true
 o:depends("DNS_type", "cloudflare")
+preserve_dns_arg(o) 
 
 o=s:taboption("dnstab", Value,"app_key",translate("Access Key ID"))
 o.rmempty=true
 o:depends("DNS_type", "aliyun")
+preserve_dns_arg(o)
+
 o=s:taboption("dnstab", Value,"app_secret",translate("Access Key Secret"))
 o.rmempty=true
 o:depends("DNS_type", "aliyun")
+preserve_dns_arg(o) 
 
 o=s:taboption("dnstab", ListValue, "line", translate("Lines"))
 o:value("default", translate("default"))
@@ -319,6 +340,7 @@ o:value("unicom", translate("unicom"))
 o:value("mobile", translate("mobile"))
 o:depends("DNS_type", "aliyun")
 o.default ="telecom"
+preserve_dns_arg(o)
 
 s:tab("dnshost", translate("HOST"))
 o=s:taboption("dnshost", Flag, "HOST_enabled",translate("HOST Enabled"))
