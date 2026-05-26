@@ -16,6 +16,10 @@ if [ "$isIpv6" = "1" ] ;then
 	type="AAAA"
 fi
 
+safe_curl() {
+    curl -s --connect-timeout 5 --max-time 10 "$@"
+}
+
 # ==========================================
 # 逐级递进循环获取 Zone ID (完美支持多级子域名如 test.xx.xx.com)
 # ==========================================
@@ -26,7 +30,7 @@ get_zone_id() {
     # 循环条件：当前域名不为空且包含点号 "."
     while [ -n "$current_domain" ] && echo "$current_domain" | grep -q '\.'; do
         # 请求 Cloudflare API 匹配当前级别的域名
-        zone_res=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${current_domain}&status=active" \
+        zone_res=$(safe_curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${current_domain}&status=active" \
              -H "Authorization: Bearer $cf_token" \
              -H "Content-Type: application/json")
 
@@ -59,7 +63,7 @@ echolog "成功获取到 $record_name 所属的 Zone ID: $cf_zone_id"
 # ==========================================
 # 1. 尝试获取现有的 DNS 记录 ID
 # ==========================================
-record_res=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/dns_records?type=$type&name=$record_name" \
+record_res=$(safe_curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/dns_records?type=$type&name=$record_name" \
      -H "Authorization: Bearer $cf_token" \
      -H "Content-Type: application/json")
 
@@ -69,7 +73,7 @@ if [ -z "$record_id" ]; then
 	# ==========================================
 	# 2a. 如果记录不存在，则创建新记录
 	# ==========================================
-	res=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/dns_records" \
+	res=$(safe_curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/dns_records" \
 	     -H "Authorization: Bearer $cf_token" \
 	     -H "Content-Type: application/json" \
 	     --data '{"type":"'"$type"'","name":"'"$record_name"'","content":"'"$ip"'","ttl":60,"proxied":false}')
@@ -84,7 +88,7 @@ else
 	# ==========================================
 	# 2b. 如果记录已存在，则更新该记录
 	# ==========================================
-	res=$(curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/dns_records/$record_id" \
+	res=$(safe_curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$cf_zone_id/dns_records/$record_id" \
 	     -H "Authorization: Bearer $cf_token" \
 	     -H "Content-Type: application/json" \
 	     --data '{"type":"'"$type"'","name":"'"$record_name"'","content":"'"$ip"'","ttl":60,"proxied":false}')
