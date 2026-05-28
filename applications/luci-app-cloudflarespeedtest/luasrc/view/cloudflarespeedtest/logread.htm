@@ -1,23 +1,132 @@
 <%+cbi/valueheader%>
-<input type="checkbox" id="checkbox1" checked><%:Auto refresh%></input>
-<textarea id="logview" class="cbi-input-textarea" style="width: 100%" rows="30" readonly="readonly"></textarea>
+
+<div style="margin-bottom:8px;">
+	<label>
+		<input type="checkbox" id="auto_refresh" checked="checked" />
+		<%:自动刷新%>
+	</label>
+</div>
+
+<textarea id="log_text" style="width:100%; min-height:420px; font-family:monospace;" readonly></textarea>
 
 <script type="text/javascript">
-    const LOG_URL = '<%=luci.dispatcher.build_url("admin", "services", "cloudflarespeedtest","getlog")%>';
-    
-    function getlog(){
-        XHR.get(LOG_URL, null, function(x, data) {            
-             logview.value = data.log;   
-             if(document.getElementById("checkbox1").checked == true){
-                logview.scrollTop = logview.scrollHeight;
-             }     
-        });
-    }
-    getlog()
-    setInterval(() => { 
-        if(document.getElementById("checkbox1").checked == true){
-            getlog()
-        }
-    }, 2000);
+	var logPos = 0;
+	var logBox = document.getElementById("log_text");
+	var autoRefresh = document.getElementById("auto_refresh");
+
+	var IP_COL_WIDTH = 34;
+
+	function padRight(str, len) {
+		str = String(str || "");
+		while (str.length < len) str += " ";
+		return str;
+	}
+
+	function padLeft(str, len) {
+		str = String(str || "");
+		while (str.length < len) str = " " + str;
+		return str;
+	}
+
+	function padCenter(str, len) {
+		str = String(str || "");
+		var left = Math.floor((len - str.length) / 2);
+		var right = len - str.length - left;
+		while (left-- > 0) str = " " + str;
+		while (right-- > 0) str = str + " ";
+		return str;
+	}
+
+	function formatHeader() {
+		return padCenter("IP 地址", IP_COL_WIDTH) +
+			padCenter("已发送", 3) +
+			padCenter("已接收", 5) +
+			padCenter("丢包率", 5) +
+			padCenter("平均延迟", 7) +
+			padCenter("下载速度(MB/s)", 10) +
+			padCenter("地区码", 8);
+	}
+
+	function formatResultLine(line) {
+		var s = String(line || "").trim();
+		var arr = s.split(/\s+/);
+
+		if (arr.length < 7)
+			return line;
+
+		if (!/^([0-9a-fA-F:]+|\d+\.\d+\.\d+\.\d+)$/.test(arr[0]))
+			return line;
+
+		return padRight(arr[0], IP_COL_WIDTH) +
+			padLeft(arr[1], 7) +
+			padLeft(arr[2], 7) +
+			padLeft(arr[3], 8) +
+			padLeft(arr[4], 10) +
+			padLeft(arr[5], 15) +
+			padLeft(arr[6] || "", 8);
+	}
+
+	function cleanLog(content) {
+		return String(content || "")
+			.replace(/\x1b\[[0-9;]*[A-Za-z]/g, "")
+			.replace(/[↖↗↘↙]/g, "")
+			.replace(/\[[^\]\n]*[-_=]{5,}[^\]\n]*\]/g, "")
+			.replace(/\[\s*\]/g, "")
+			.replace(/[-_=]{10,}/g, "")
+			.replace(/可用\s*:\s*(\d+)\s+(\d+)\s*\/\s*\d+/g, function(m, a, b) {
+				return parseInt(b, 10) > 1 ? "" : m;
+			})
+			.replace(/\r/g, "\n")
+			.replace(/[ \t]{2,}/g, " ")
+			.replace(/\s*(可用\s*:\s*)/g, "\n$1")
+			.replace(/\s*(开始下载测速)/g, "\n$1")
+			.replace(/\s*(开始延迟测速)/g, "\n$1")
+			.replace(/(\d+\s*\/\s*\d+)\s+(?=\d+\s*\/\s*\d+)/g, "$1\n")
+			.replace(/^\s*\d+\s*\/\s*\d+\s+(?=IP\s*地址)/gm, "")
+			.replace(/^\s*\d+\s*\/\s*\d+\s*$/gm, "")
+			.replace(/^\s*\d+\s*\/\s*\d+\s*/gm, "")
+			.replace(/\n{3,}/g, "\n\n")
+			.split(/\n/)
+			.map(function(line) {
+				var s = line.trim();
+
+				if (/^IP\s*地址\s+已发送\s+已接收\s+丢包率\s+平均延迟\s+下载速度/.test(s)) {
+					return formatHeader();
+				}
+
+				if (/^([0-9a-fA-F:]+|\d+\.\d+\.\d+\.\d+)/.test(s)) {
+					return formatResultLine(s);
+				}
+
+				return line;
+			})
+			.join("\n");
+	}
+
+	function refreshLog() {
+		if (!autoRefresh.checked)
+			return;
+
+		XHR.get('<%=url("admin/services/cloudflarespeedtest/getlog")%>', { pos: logPos }, function(x, data) {
+			if (!data)
+				return;
+
+			if (typeof data.pos !== "undefined")
+				logPos = data.pos;
+
+			if (data.log) {
+				logBox.value = cleanLog(logBox.value + data.log);
+
+				if (logBox.value.length > 300000)
+					logBox.value = logBox.value.slice(-300000);
+
+				logBox.scrollTop = logBox.scrollHeight;
+			}
+		});
+	}
+
+	refreshLog();
+	setInterval(refreshLog, 2000);
 </script>
+
 <%+cbi/valuefooter%>
