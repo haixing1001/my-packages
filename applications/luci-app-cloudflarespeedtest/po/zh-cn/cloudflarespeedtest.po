@@ -101,7 +101,7 @@ msgid "Advanced"
 msgstr "高级模式"
 
 msgid "Thread"
-msgid "线程数"
+msgstr "线程数"
 
 msgid "Average Latency Cap"
 msgstr "平均延迟上限"
