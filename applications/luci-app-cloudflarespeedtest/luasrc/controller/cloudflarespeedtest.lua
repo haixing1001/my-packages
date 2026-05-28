@@ -1,10 +1,15 @@
--- Copyright (C) 2020 mingxiaoyu <fengying0347@163.com>
--- Licensed to the public under the GNU General Public License v3.
-module("luci.controller.cloudflarespeedtest",package.seeall)
+module("luci.controller.cloudflarespeedtest", package.seeall)
+
+local fs = require "nixio.fs"
+
+local LOG_FILE = "/var/log/cloudflarespeedtest.log"
+
+local function is_running()
+	return luci.sys.call("pidof cdnspeedtest >/dev/null 2>&1") == 0
+end
 
 function index()
-
-	if not nixio.fs.access('/etc/config/cloudflarespeedtest') then
+	if not fs.access("/etc/config/cloudflarespeedtest") then
 		return
 	end
 
@@ -17,34 +22,53 @@ function index()
 	entry({"admin", "services", "cloudflarespeedtest", "logread"}, form("cloudflarespeedtest/logread"), _("Logs"), 2)
 
 	entry({"admin", "services", "cloudflarespeedtest", "status"}, call("act_status")).leaf = true
-	entry({"admin", "services", "cloudflarespeedtest", "stop"}, call("act_stop"))
-	entry({"admin", "services", "cloudflarespeedtest", "start"}, call("act_start"))
-	entry({"admin", "services", "cloudflarespeedtest", "getlog"}, call("get_log"))
+	entry({"admin", "services", "cloudflarespeedtest", "stop"}, call("act_stop")).leaf = true
+	entry({"admin", "services", "cloudflarespeedtest", "start"}, call("act_start")).leaf = true
+	entry({"admin", "services", "cloudflarespeedtest", "getlog"}, call("get_log")).leaf = true
 end
 
 function act_status()
-	local e = {}
-	e.running = luci.sys.call("busybox ps -w | grep cdnspeedtest | grep -v grep >/dev/null") == 0
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	luci.http.write_json({ running = is_running() })
 end
 
 function act_stop()
- 	luci.sys.call("busybox ps -w | grep cdnspeedtest | grep -v grep | xargs kill -9 >/dev/null")
-	luci.http.write('')
+	luci.sys.call("pidof cdnspeedtest >/dev/null 2>&1 && kill -9 $(pidof cdnspeedtest) >/dev/null 2>&1")
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({ running = is_running() })
 end
 
 function act_start()
 	act_stop()
-	luci.sys.call("/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh start")
-	luci.http.write('')
+	luci.sys.call("/usr/bin/cloudflarespeedtest/cloudflarespeedtest.sh start >/dev/null 2>&1 &")
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({ running = true })
 end
 
 function get_log()
-	local fs = require "nixio.fs"
-	local e = {}
-	e.running = luci.sys.call("busybox ps -w | grep cdnspeedtest | grep -v grep >/dev/null") == 0
-	e.log= fs.readfile("/var/log/cloudflarespeedtest.log") or ""	 
+	local pos = tonumber(luci.http.formvalue("pos")) or 0
+	local content = ""
+	local newpos = pos
+	local size = fs.stat(LOG_FILE, "size") or 0
+
+	if pos > size then
+		pos = 0
+	end
+
+	if fs.access(LOG_FILE) then
+		local fp = io.open(LOG_FILE, "r")
+		if fp then
+			fp:seek("set", pos)
+			content = fp:read(131072) or ""
+			newpos = fp:seek() or size
+			fp:close()
+		end
+	end
+
 	luci.http.prepare_content("application/json")
-	luci.http.write_json(e)
+	luci.http.write_json({
+		running = is_running(),
+		pos = newpos,
+		log = content
+	})
 end
