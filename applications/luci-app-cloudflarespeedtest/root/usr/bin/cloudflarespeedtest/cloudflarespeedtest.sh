@@ -150,22 +150,36 @@ function speed_test(){
 }
 
 function ip_replace(){
+    local dns_count=1
+    
+    # 核心修改：只有当开启高级模式时，才根据用户填写的下载测速数量 dn 同步多条记录；否则默认只同步 1 条
+    if [ "x${advanced}" = "x1" ]; then
+        dns_count=$dn
+    fi
+    
+    # 安全边界防御：确保数量有效
+    if [ -z "$dns_count" ] || [ "$dns_count" -le 0 ]; then
+        dns_count=1
+    fi
 
-    # 获取最快 IP（从 result.csv 结果文件中获取第一个 IP）
-    bestip=$(sed -n "2,1p" $IP_FILE | awk -F, '{print $1}')
-    if [[ -z "${bestip}" ]]; then
+    # 动态截取测速结果文件中前 dns_count 个最快 IP（多行转换为单行空格分隔）
+    bestips=$(sed -n "2,$((dns_count + 1))p" $IP_FILE | awk -F, '{print $1}' | tr '\n' ' ')
+    
+    # 提取第一个最快 IP，留给不支持多 IP 绑定的第三方代理插件（如 SSR/Passwall）使用
+    bestip=$(echo $bestips | awk '{print $1}')
+
+    if [ -z "${bestip}" ]; then
         echolog "CloudflareST 测速结果 IP 数量为 0,跳过下面步骤..."
     else
         host_ip
         mosdns_ip
-        ddns_ip
+        ddns_ip "$bestips"  # 将截取到的多条优选 IP 传递给 DNS 模块
         ssr_best_ip
         vssr_best_ip
         bypass_best_ip
         passwall_best_ip
         passwall2_best_ip
         restart_app
-
     fi
 }
 
@@ -327,31 +341,24 @@ function restart_app(){
 }
 
 function ddns_ip(){
-    if [ "x${DNS_enabled}" == "x1" ] ;then
+    local multi_ips="$1"  # 接收传递过来的多 IP 字符串
+    if [ "x${DNS_enabled}" = "x1" ] ;then
         get_servers_config "DNS_type" "main_domain" "sub_domain" "cf_token" "app_key" "app_secret" "line"
 
-        if [ "$sub_domain" == "@" ]; then
+        if [ "$sub_domain" = "@" ]; then
             record_name="$main_domain"
         else
             record_name="${sub_domain}.${main_domain}"
         fi
 
-        if [ "$DNS_type" == "cloudflare" ] ;then
-            /usr/bin/cloudflarespeedtest/cfddns.sh "$cf_token" "$record_name" "$ipv6_enabled" "$bestip"
+        # 匹配前端页面设定的 cloudflare 类型
+        if [ "$DNS_type" = "cloudflare" ] ;then
+            /usr/bin/cloudflarespeedtest/cfddns.sh "$cf_token" "$record_name" "$ipv6_enabled" "$multi_ips"
 
             if [ "$?" = "0" ]; then
-                echolog "更新域名 ${record_name} Cloudflare DNS 完成"
+                echolog "更新域名 ${record_name} Cloudflare 多条 DNS 记录完成"
             else
                 echolog "更新域名 ${record_name} Cloudflare DNS 失败"
-            fi
-
-        elif [ "$DNS_type" == "aliyun" ] ;then
-            /usr/bin/cloudflarespeedtest/aliddns.sh "$app_key" "$app_secret" "$main_domain" "$sub_domain" "$line" "$ipv6_enabled" "$bestip"
-
-            if [ "$?" = "0" ]; then
-                echolog "更新域名 ${record_name} 阿里云 DNS 完成"
-            else
-                echolog "更新域名 ${record_name} 阿里云 DNS 失败"
             fi
         fi
     fi
