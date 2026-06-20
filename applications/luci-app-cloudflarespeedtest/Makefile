@@ -47,17 +47,14 @@ endef
 define Package/luci-app-cloudflarespeedtest/postinst
 #!/bin/sh
 
-if [ -z "$${IPKG_INSTROOT}" ]; then
+[ -n "$${IPKG_INSTROOT}" ] && exit 0
 
-grep -q '^cdnspeedtest:' /etc/group || \
-	addgroup -S cdnspeedtest
+if ! grep -q '^cdnspeedtest:' /etc/group 2>/dev/null; then
+	echo 'cdnspeedtest:x:453:' >> /etc/group
+fi
 
-grep -q '^cdnspeedtest:' /etc/passwd || \
-	adduser -S -D -H \
-		-G cdnspeedtest \
-		-s /bin/false \
-		cdnspeedtest
-
+if ! grep -q '^cdnspeedtest:' /etc/passwd 2>/dev/null; then
+	echo 'cdnspeedtest:x:453:453:cdnspeedtest:/tmp:/bin/false' >> /etc/passwd
 fi
 
 exit 0
