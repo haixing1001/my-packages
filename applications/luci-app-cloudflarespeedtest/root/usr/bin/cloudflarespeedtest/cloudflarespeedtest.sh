@@ -40,28 +40,44 @@ function appinit(){
 
 function speed_test(){
 
-    rm -rf $LOG_FILE
+    rm -f "$LOG_FILE"
+    touch "$LOG_FILE"
 
-    command="/usr/bin/cdnspeedtest -sl ${speed} -url ${custome_url} -o ${IP_FILE}"
+    mkdir -p "$(dirname "$IP_FILE")"
+    touch "$IP_FILE"
 
-    if [ $ipv6_enabled -eq "1" ] ;then
-        command="${command} -f ${IPV6_TXT}"
+    chown cdnspeedtest:cdnspeedtest "$LOG_FILE" "$IP_FILE" 2>/dev/null
+    chmod 644 "$LOG_FILE" "$IP_FILE" 2>/dev/null
+
+    if [ "$ipv6_enabled" -eq "1" ]; then
+        IP_TXT="${IPV6_TXT}"
     else
-        command="${command} -f ${IPV4_TXT}"
+        IP_TXT="${IPV4_TXT}"
     fi
 
-    if [ $advanced -eq "1" ] ; then
-        command="${command} -tl ${tl} -tll ${tll} -tlr ${tlr} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
-        if [ $dd -eq "1" ] ; then
-            command="${command} -dd"
+    if [ "$advanced" -eq "1" ]; then
+        ARGS="-sl ${speed} -url ${custome_url} -o ${IP_FILE} -f ${IP_TXT} -tl ${tl} -tll ${tll} -tlr ${tlr} -n ${threads} -t ${t} -dt ${dt} -dn ${dn}"
+
+        if [ "$dd" -eq "1" ]; then
+            ARGS="${ARGS} -dd"
         fi
-        if [ $tp -ne "443" ] ; then
-            command="${command} -tp ${tp}"
+
+        if [ "$tp" -ne "443" ]; then
+            ARGS="${ARGS} -tp ${tp}"
         fi
     else
-        command="${command} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 1"
+        ARGS="-sl ${speed} -url ${custome_url} -o ${IP_FILE} -f ${IP_TXT} -tl 200 -tll 40 -n 200 -t 4 -dt 10 -dn 1"
     fi
 
+    if command -v start-stop-daemon >/dev/null 2>&1; then
+        start-stop-daemon -S -c cdnspeedtest:cdnspeedtest \
+            -x /usr/bin/cdnspeedtest -- $ARGS >> "$LOG_FILE" 2>&1
+    else
+        /usr/bin/cdnspeedtest $ARGS >> "$LOG_FILE" 2>&1
+    fi
+
+    chown root:root "$IP_FILE" 2>/dev/null
+    
     appinit
 
     ssr_original_server=$(uci get shadowsocksr.@global[0].global_server 2>/dev/null)
