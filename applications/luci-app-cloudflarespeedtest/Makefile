@@ -44,5 +44,23 @@ define Package/$(PKG_NAME)/install
 
 endef
 
+define Package/luci-app-cloudflarespeedtest/postinst
+#!/bin/sh
+
+if [ -z "$${IPKG_INSTROOT}" ]; then
+
+grep -q '^cdnspeedtest:' /etc/group || \
+	addgroup -S cdnspeedtest
+
+grep -q '^cdnspeedtest:' /etc/passwd || \
+	adduser -S -D -H \
+		-G cdnspeedtest \
+		-s /bin/false \
+		cdnspeedtest
+
+fi
+
+exit 0
+endef
 
 include $(TOPDIR)/feeds/luci/luci.mk
